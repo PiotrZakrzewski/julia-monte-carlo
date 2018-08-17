@@ -1,9 +1,9 @@
 using StatsBase
 
 mutable struct Player
-    basicSpeed::Float16
+    basicSpeed::Float64
     pistols::UInt8
-    dmgMultiplier::Float16
+    dmgMultiplier::Float64
     strength::UInt8
     dexterity::UInt8
     health::UInt8
@@ -17,12 +17,8 @@ mutable struct Player
     dr::UInt8
 end
 
-function genericCharacter()
-    st = 10
-    dex = 10
-    ht = 10
-    int = 10
-    basicSpeed = (ht + dex) / 4
+function genericCharacter(;st = 10, dex = 10, ht = 10, int = 10)
+    basicSpeed::Float64 = Float64(ht + dex) / Float64(4.0)
     pistols = 2
     HP = st
     dod = round(3 + basicSpeed)
@@ -76,7 +72,7 @@ end
 
 function checkHP(character::Player)
     if character.hitPoints < character.strength / 3 && !character.reeling
-        character.dodge =  character.dodge / 2
+        character.dodge =  round(character.dodge / 2.0)
         character.reeling = true
     elseif character.hitPoints < 0 && basicRoll() > character.health
             character.disabled = true
