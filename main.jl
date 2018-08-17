@@ -111,14 +111,21 @@ function duel(player1::Player, player2::Player)
     (!player1.disabled, rounds) # player one won true/false
 end
 
-
-results = [begin 
-    p1 = genericCharacter()
-    p2 = genericCharacter()
-    duel(p1, p2)[1] 
+topRes = [
+    begin
+        results = [begin 
+        p1 = genericCharacter()
+        p2 = genericCharacter()
+        duel(p1, p2)[1] 
+        end
+        for i in 1:100]
+        count(results) / length(results)
     end
-    for i in 1:5000]
-prop = count(results) / length(results)
-println(prop)
+    for j in 1:100
+]
+av = round(sum(topRes) /length(topRes), digits=2)
+vr = round(variation(topRes), digits=2)
+println(av)
+println(vr)
 
 
