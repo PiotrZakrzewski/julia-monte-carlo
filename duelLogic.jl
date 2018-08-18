@@ -69,9 +69,19 @@ function duelAttackPhase(attacker::Player, defender::Player, debug= false)
 end
 
 function duel(player1::Player, player2::Player, debug=false)
-    p1BasicSpeed = (player1.health + player1.dexterity / 4)
-    p2BasicSpeed = (player2.health + player2.dexterity / 4)
-    if p1BasicSpeed < p2BasicSpeed
+    p1BasicSpeed = (player1.health + player1.dexterity) / 4
+    p2BasicSpeed = (player2.health + player2.dexterity) / 4
+    if p1BasicSpeed == p2BasicSpeed
+        if rand(Bool)
+            debug && println(`Player2 goes first`)
+            p1 = player2
+            p2 = player1
+        else    
+            debug && println(`Player1 goes first`)
+            p1 = player1
+            p2 = player2
+        end
+    elseif p1BasicSpeed < p2BasicSpeed
         debug && println(`Player2 goes first`)
         p1 = player2
         p2 = player1
