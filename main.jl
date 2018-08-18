@@ -33,7 +33,7 @@ function costFun(x)
 end
 
 function monteCarlo(;iters=1000, temp=2, eps=1)
-    IV = [12, 22, 12]
+    IV = [10, 10, 10]
     currentCost = costFun(IV)
     getSwitch() = begin 
         can = rand(1:10) <= temp
