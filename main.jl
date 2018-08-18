@@ -1,131 +1,66 @@
 using StatsBase
+include("./duelLogic.jl")
 
-mutable struct Player
-    basicSpeed::Float64
-    pistols::UInt8
-    dmgMultiplier::Float64
-    strength::UInt8
-    dexterity::UInt8
-    health::UInt8
-    intelligence::UInt8
-    damageDice::UInt8
-    damageMod::Int8
-    hitPoints::Int64
-    dodge::Int64
-    disabled::Bool
-    reeling::Bool
-    dr::UInt8
-end
-
-function genericCharacter(;st = 10, dex = 10, ht = 10, int = 10)
-    basicSpeed::Float64 = Float64(ht + dex) / Float64(4.0)
-    pistols = 2
-    HP = st
-    dod = round(3 + basicSpeed)
-    Player(basicSpeed, pistols, 1.0, st, dex, ht, int, 2, 1, HP, dod, false, false, 0)
-end
-
-function roll6()::UInt8
-    a = rand(UInt8) % 6 # 1x k6
-    a + 1
-end
-
-function basicRoll()
-    a = rand(UInt8, 3).%6 # 3x k6
-    a.+1 # UInt8 starts at 0
-    sum(a)
-end
-
-function attackRoll(effectiveSkill)
-    s =basicRoll()
-    success = false
-    critical = false
-    if s < 5 # always a success
-        success = true
-        critical = true
-    elseif s <= effectiveSkill
-        success = true
-    end
-    if s == 5 || s == 6 # possible critical hit
-        critical = effectiveSkill - 10 >= s
-    end
-    (success=success, critical=critical)
-end
-
-function dodge(threshold)
-    s = basicRoll()
-    if s < 5
-        return true
-    elseif s > 16
-        return false
-    elseif s < threshold
-        return true
-    else
-        return false
-    end
-end
-
-function getDmg(character::Player)::Int64
-    dmgRolls =  [roll6() for i in 0:character.damageDice]
-    sum(dmgRolls) + character.damageMod
-end
-
-function checkHP(character::Player)
-    if character.hitPoints < character.strength / 3 && !character.reeling
-        character.dodge =  round(character.dodge / 2.0)
-        character.reeling = true
-    elseif character.hitPoints < 0 && basicRoll() > character.health
-            character.disabled = true
-    end        
-end
+const SAMPLE_SIZE = 100
+const SAMPLES = 100
+const WINNING_REWARD = 100
+const LOSING_PENALTY = 1e7
 
 
-function duelAttackPhase(attacker::Player, defender::Player)
-    res = attackRoll(attacker.pistols + attacker.dexterity )
-    if res.success
-        dres = dodge(defender.basicSpeed)
-        if !dres
-            dm = getDmg(attacker)
-            dm = max(dm - defender.dr, 0)
-            defender.hitPoints = defender.hitPoints - dm
-        end
-    end
-end
-
-function duel(player1::Player, player2::Player)
-    if player1.basicSpeed < player2.basicSpeed
-        p1 = player2
-        p2 = player1
-    else
-        p1 = player1
-        p2 = player2
-    end
-    rounds = 0
-    while (!player1.disabled && !player2.disabled)
-        duelAttackPhase(p1, p2)
-        checkHP(p2)
-        duelAttackPhase(p2, p1)
-        checkHP(p1)
-        rounds = rounds + 1
-    end
-    (!player1.disabled, rounds) # player one won true/false
-end
-
-topRes = [
+function costFun(x)
+    topRes = [
     begin
         results = [begin 
-        p1 = genericCharacter()
-        p2 = genericCharacter()
+        # initial hitpoints = stregth
+        p1 = Player(2, x[1], x[2], x[3], 2, x[1], false, false)
+        p2 = Player(2, 10, 10, 10, 2, 10, false, false)
         duel(p1, p2)[1] 
         end
-        for i in 1:100]
+        for i in 1:SAMPLE_SIZE]
         count(results) / length(results)
     end
-    for j in 1:100
-]
-av = round(sum(topRes) /length(topRes), digits=2)
-vr = round(variation(topRes), digits=2)
-println(av)
-println(vr)
+    for j in 1:SAMPLES]
+    points = (x[1] - 10) * 10 + (x[2] - 10) * 10 + (x[3] - 10) * 20
+    av = round(sum(topRes) /length(topRes), digits=2)
+    println(av)
+    if av < 0.5
+        winningFactor = LOSING_PENALTY * (1 - av)# less than 0.5 means you are losing
+    else
+        winningFactor = WINNING_REWARD * av
+    end
+    println(`winning factor: $winningFactor points: $points`)
+    points + winningFactor
+end
 
+function monteCarlo(;iters=1000, temp=2, eps=1)
+    IV = [12, 22, 12]
+    currentCost = costFun(IV)
+    getSwitch() = begin 
+        can = rand(1:10) <= temp
+        if !can
+            return 0
+        elseif rand(Bool)
+            return 1
+        else
+            return -1
+        end
+    end
 
+    for i in 1:iters
+        switchVec = [getSwitch() for i in 1:4]
+        newIV = [0,0,0]
+        for j in 1:3
+            newIV[j] = max(switchVec[j] + IV[j], 1)
+        end
+        newCost = costFun(newIV)
+        if newCost < currentCost
+            currentCost = newCost
+            IV = newIV
+        end
+        println(`$IV cost:$currentCost`)
+    end
+    IV, currentCost
+end
+
+IV, cost = monteCarlo(iters=1000, temp=5)
+println(`$IV  cost:$cost`)
