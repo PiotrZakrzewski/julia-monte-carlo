@@ -5,6 +5,8 @@ const SAMPLE_SIZE = 100
 const SAMPLES = 100
 const WINNING_REWARD = -1e7 # less is better, objective is to minimize
 const LOSING_PENALTY = 1e7
+const POINT_LIMIT = 0
+const OVER_THE_POINT_LIMIT_PENALTY = 1e7
 
 
 function costFun(x)
@@ -12,8 +14,8 @@ function costFun(x)
     begin
         results = [begin 
         # initial hitpoints = stregth
-        p1 = Player(2, x[1], x[2], x[3], 2, x[1], false, false)
-        p2 = Player(2, 10, 10, 10, 2, 10, false, false)
+        p1 = Player(2, x[1], x[2], x[3], 2, x[1], false, false, "P1")
+        p2 = Player(2, 10, 10, 10, 2, 10, false, false, "P2")
         duel(p1, p2)[1] 
         end
         for i in 1:SAMPLE_SIZE]
@@ -21,6 +23,11 @@ function costFun(x)
     end
     for j in 1:SAMPLES]
     points = (x[1] - 10) * 10 + (x[2] - 10) * 10 + (x[3] - 10) * 20
+    if points > POINT_LIMIT
+        pointLimitPenalty = OVER_THE_POINT_LIMIT_PENALTY
+    else
+        pointLimitPenalty = 0
+    end
     av = round(sum(topRes) /length(topRes), digits=2)
     if av < 0.5
         winningFactor = LOSING_PENALTY * (1 - av)# less than 0.5 means you are losing
@@ -28,7 +35,7 @@ function costFun(x)
         winningFactor = WINNING_REWARD * av
     end
     infoStr = `winning factor: $winningFactor points: $points winning %: $av`
-    (points + winningFactor, infoStr)
+    (points + winningFactor + pointLimitPenalty, infoStr)
 end
 
 function monteCarlo(;iters=1000, temp=2, eps=1)
@@ -63,4 +70,4 @@ function monteCarlo(;iters=1000, temp=2, eps=1)
 end
 
 IV, cost = monteCarlo(iters=1000, temp=5)
-println(`$IV  cost:$cost`)
+println(`Optimal stats: Strength: $(IV[1]) Dexterity: $(IV[2]) Health: $(IV[3])  cost:$cost`)

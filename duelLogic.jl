@@ -1,4 +1,4 @@
-MAX_ROUNDS = 10
+const MAX_ROUNDS = 10
 
 mutable struct Player
     pistols::UInt8
@@ -9,6 +9,7 @@ mutable struct Player
     hitPoints::Int64
     disabled::Bool
     reeling::Bool
+    name::String
 end
 
 function basicRoll()
@@ -22,7 +23,7 @@ function basicTest(threshold, debug)
         return true
     elseif s > 16 # always a failure
         return false
-    elseif s < threshold
+    elseif s <= threshold
         return true
     else
         return false
@@ -35,22 +36,24 @@ function getDmg(damageDice)
 end
 
 function checkHP(character::Player, debug=false)
-    timesSt = round(character.hitPoints / character.strength)
+    timesSt = abs(character.hitPoints / character.strength)
+    debug && println(`timesSt: $timesSt hp:$(character.hitPoints) st:$(character.strength)`)
     if character.hitPoints < (character.strength / 3) && !character.reeling
         debug && println(`Reeling`)
         character.reeling = true
-    elseif character.hitPoints < 0 && basicRoll() > (character.health - timesSt)
+    end
+    if character.hitPoints < 0 && basicRoll() > (character.health - timesSt)
         debug && println(`Disabled`)
             character.disabled = true
     else
-        debug && println("No effect")
+        debug && println("still fighting")
     end        
 end
 
 
 function duelAttackPhase(attacker::Player, defender::Player, debug= false)
     if basicTest(attacker.pistols + attacker.dexterity, debug )
-        debug && println(`Attacker: shot successfull`)
+        debug && println(`Attacker $(attacker.name): shot successfull`)
         basicSpeed = (defender.health + defender.dexterity) / 4
         dodge = round(3 + basicSpeed)
         if defender.reeling
@@ -58,8 +61,10 @@ function duelAttackPhase(attacker::Player, defender::Player, debug= false)
         end
         if !basicTest(dodge, debug)
             dmg = getDmg(attacker.damageDice)
-            debug && println(`Defender failed to dodge. Received dmg: $dmg`)
+            debug && println(`Defender $(defender.name) failed to dodge. Received dmg: $dmg`)
+            debug && println(`current hp: $(defender.hitPoints)`)
             defender.hitPoints -= dmg
+            debug && println(`new hp: $(defender.hitPoints)`)
         else
             debug && println("Dodge successfull")
         end
