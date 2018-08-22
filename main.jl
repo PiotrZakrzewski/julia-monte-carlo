@@ -22,7 +22,7 @@ function costFun(x)
         count(results) / length(results)
     end
     for j in 1:SAMPLES]
-    points = (x[1] - 10) * 10 + (x[2] - 10) * 10 + (x[3] - 10) * 20
+    points = 10(x[1] - 10) + 20(x[2]-10) + 10(x[3]-10)
     if points > POINT_LIMIT
         pointLimitPenalty = OVER_THE_POINT_LIMIT_PENALTY
     else
