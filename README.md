@@ -11,7 +11,7 @@ Run
 julia main.jl
 ```
 You will need Julia 1.0. Refer to [Julia Webpage](https://julialang.org/downloads/) for the binaries or use your package manager of choice. There are no dependancies.
-It will conduct a simulated gun fight according to simplified GURPS 4ed rules 1000 times for each iteration and each iteration it will randomly change the stats of the first of dueling characters. It will accept the change only if it yielded better results (measured by % of wins and the total cost of the character's stats). The sim is rules by the following params, which you can tweak by editing the `main.jl` script.
+It will conduct a simulated gun fight according to simplified GURPS 4ed rules 1000 times for each iteration and each iteration it will randomly change the stats of the first of dueling characters. It will accept the change only if it yielded better results (measured by % of wins and the total cost of the character's stats). The sim is ruled by the following params, which you can tweak by editing the `main.jl` script.
 ```julia
 const SAMPLES = 1000 # number of duels in the simulation
 const WINNING_REWARD = -1e4 # less is better, objective is to minimize
@@ -21,7 +21,7 @@ const OVER_THE_POINT_LIMIT_PENALTY = 1e7 # penalty for characters exceeding the 
 const TEMPERATURE = 4 # randomness in each step
 const ITERATIONS = 1000 # number of iterations before stopping the sim and annuncing result
 const STARTING_VECTOR = [10, 10, 10] # values for Strength, Dexterity and Health the sim will start with
-const OPPONENT = [10, 10, 10] # values for Strength, Dexterity and Health of the opponent. The sim does mutate these values
+const OPPONENT = [10, 10, 10] # values for Strength, Dexterity and Health of the opponent. The sim does not mutate these values
 const DMG_DICE = 2 # how many D6 dice will be rolled to determine the dmg dealt on successfull hit
 const PISTOL_SKILL = 2 # how much GURPS bonus to basic skill in pistol the duelists have. This is not mutated by the sim.
 const MAX_ROUNDS = 10 # after that many rounds the duel is considered lost if the opponent (P2) is not disabled
@@ -35,7 +35,7 @@ GURPS 4ed rules used for this simulation:
 - The test that determines if you managed to hit a target is a sum of rolling 3 D6 dice. If you roll at or below the threshold (see previous point) you passed the test.
 - But not so fast! If you shoot at someone, in GURPS they can dodge. Dodge is also determined a 3x D6 test but is based on the following formula:
 ```julia
-    basicSpeed = (defender.health defender.dexterity) / 4
+    basicSpeed = (defender.health + defender.dexterity) / 4
     dodge = round(3 + basicSpeed)
 ```
 - Who goes first in the duel? The one with higher `basicSpeed`. See the snippet above for how it is calculated from the base stats.
