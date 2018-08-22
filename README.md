@@ -5,6 +5,10 @@ Problem: Find optimal values of Strength, Dexterity and Health for a duel in GUR
 
 Solution: Monte-Carlo simulation where Strength, Dexterity and Health are assigned at random (with randomness determined by a parameter) and given number of duels is conducted to calculate % of duels won.
 ## What does the script do?
+First have a look at output of `duelExample.jl` it will give you a taste of how one duel actually looks like:
+![](julia-poc2.gif)
+
+Then run the simulation itself and see how it finds the best distribution of stats for the gun fight:
 ![](julia-poc.gif)
 Run 
 ```bash
