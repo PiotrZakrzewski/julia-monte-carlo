@@ -1,45 +1,43 @@
-using StatsBase
 include("./duelLogic.jl")
 
-const SAMPLE_SIZE = 100
-const SAMPLES = 100
-const WINNING_REWARD = -1e7 # less is better, objective is to minimize
-const LOSING_PENALTY = 1e7
-const POINT_LIMIT = 0
-const OVER_THE_POINT_LIMIT_PENALTY = 1e7
-
+const SAMPLES = 1000 # number of duels in the simulation
+const WINNING_REWARD = -1e4 # less is better, objective is to minimize
+const LOSING_PENALTY = 1e4 # how many points it cost to be below 50% winning rate
+const POINT_LIMIT = 0 # how many GURPS character points do we allow
+const OVER_THE_POINT_LIMIT_PENALTY = 1e7 # penalty for characters exceeding the above limit
+const TEMPERATURE = 4 # randomness in each step
+const ITERATIONS = 1000 # number of iterations before stopping the sim and annuncing result
+const STARTING_VECTOR = [10, 10, 10] # values for Strength, Dexterity and Health the sim will start with
+const OPPONENT = [10, 10, 10] # values for Strength, Dexterity and Health of the opponent. The sim does mutate these values
+const DMG_DICE = 2 # how many D6 dice will be rolled to determine the dmg dealt on successfull hit
+const PISTOL_SKILL = 2 # how much GURPS bonus to basic skill in pistol the duelists have. This is not mutated by the sim.
+const MAX_ROUNDS = 10 # after that many rounds the duel is considered lost if the opponent (P2) is not disabled
 
 function costFun(x)
-    topRes = [
-    begin
-        results = [begin 
-        # initial hitpoints = stregth
-        p1 = Player(2, x[1], x[2], x[3], 2, x[1], false, false, "P1")
-        p2 = Player(2, 10, 10, 10, 2, 10, false, false, "P2")
-        duel(p1, p2)[1] 
-        end
-        for i in 1:SAMPLE_SIZE]
-        count(results) / length(results)
-    end
-    for j in 1:SAMPLES]
-    points = 10(x[1] - 10) + 20(x[2]-10) + 10(x[3]-10)
+    duels = [begin 
+            # initial hitpoints = stregth
+            p1 = Player(PISTOL_SKILL, x[1], x[2], x[3], DMG_DICE, x[1], false, false, "P1")
+            p2 = Player(PISTOL_SKILL, OPPONENT[1], OPPONENT[2], OPPONENT[3], DMG_DICE, OPPONENT[1], false, false, "P2")
+            duel(p1, p2, MAX_ROUNDS)[1] 
+        end for i in 1:SAMPLES]
+    points = 10(x[1] - 10) + 20(x[2]-10) + 10(x[3]-10) # Strength and Health cost 10 GURPS points, Dex 20
     if points > POINT_LIMIT
         pointLimitPenalty = OVER_THE_POINT_LIMIT_PENALTY
     else
         pointLimitPenalty = 0
     end
-    av = round(sum(topRes) /length(topRes), digits=2)
-    if av < 0.5
-        winningFactor = LOSING_PENALTY * (1 - av)# less than 0.5 means you are losing
+    winningRate = round(count(duels) / length(duels), digits=2)
+    if winningRate < 0.5
+        winningFactor = LOSING_PENALTY * (1 - winningRate)# less than 0.5 means you are losing
     else
-        winningFactor = WINNING_REWARD * av
+        winningFactor = WINNING_REWARD * winningRate
     end
-    infoStr = `winning factor: $winningFactor points: $points winning %: $av`
+    infoStr = `winning factor: $(round(winningFactor, digits=2)) points: $points winning %: $winningRate`
     (points + winningFactor + pointLimitPenalty, infoStr)
 end
 
 function monteCarlo(;iters=1000, temp=2, eps=1)
-    IV = [10, 10, 10]
+    IV = STARTING_VECTOR
     currentCost, info = costFun(IV)
     println(info)
     getSwitch() = begin 
@@ -63,11 +61,11 @@ function monteCarlo(;iters=1000, temp=2, eps=1)
             currentCost = newCost
             IV = newIV
             println(info)
-            println(`$IV cost:$currentCost`)
+            println(`$IV cost:$(round(currentCost, digits=2))`)
         end
     end
     IV, currentCost
 end
 
-IV, cost = monteCarlo(iters=1000, temp=5)
-println(`Optimal stats: Strength: $(IV[1]) Dexterity: $(IV[2]) Health: $(IV[3])  cost:$cost`)
+IV, cost = monteCarlo(iters=ITERATIONS, temp=TEMPERATURE)
+println(`Optimal stats: Strength: $(IV[1]) Dexterity: $(IV[2]) Health: $(IV[3])  cost:$(round(cost, digits=2))`)

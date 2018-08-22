@@ -1,5 +1,3 @@
-const MAX_ROUNDS = 10
-
 mutable struct Player
     pistols::UInt8
     strength::UInt8
@@ -13,7 +11,7 @@ mutable struct Player
 end
 
 function basicRoll()
-    sum(rand(1:6, 3))
+    sum(rand(1:6, 3)) # Sum of 3 rolls of a D6 die. 
 end
 
 function basicTest(threshold, debug)
@@ -36,7 +34,8 @@ function getDmg(damageDice)
 end
 
 function checkHP(character::Player, debug=false)
-    timesSt = abs(character.hitPoints / character.strength)
+    timesSt = abs(character.hitPoints / character.strength) # How many times base HP the character have in current HP. Needed for damage effects below.
+    timesSt = round(timesSt) # The rules deal only with integers, rounding down.
     debug && println(`timesSt: $timesSt hp:$(character.hitPoints) st:$(character.strength)`)
     if character.hitPoints < (character.strength / 3) && !character.reeling
         debug && println(`Reeling`)
@@ -73,7 +72,7 @@ function duelAttackPhase(attacker::Player, defender::Player, debug= false)
     end
 end
 
-function duel(player1::Player, player2::Player, debug=false)
+function duel(player1::Player, player2::Player, max_rounds, debug=false)
     p1BasicSpeed = (player1.health + player1.dexterity) / 4
     p2BasicSpeed = (player2.health + player2.dexterity) / 4
     if p1BasicSpeed == p2BasicSpeed
@@ -108,7 +107,7 @@ function duel(player1::Player, player2::Player, debug=false)
         debug && println(`Player1: $p1`)
         debug && println(`Player2: $p2`)
         rounds += 1
-        if rounds > MAX_ROUNDS
+        if rounds > max_rounds
             return (false, rounds)
         end
     end
